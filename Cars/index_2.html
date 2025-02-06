@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Car in WebGL</title>
+    <style>
+        canvas {
+            display: block;
+            margin: auto;
+            background: #f8fafc;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="glCanvas" width="500" height="300"></canvas>
+    <script>
+        const canvas = document.getElementById("glCanvas");
+        const gl = canvas.getContext("webgl");
+
+        if (!gl) {
+            alert("WebGL not supported");
+        }
+
+        const vertices = new Float32Array([
+
+            -0.5, -0.2,  
+             0.5, -0.2,  
+             0.5,  0.1,  
+            -0.5, -0.2, 
+             0.5,  0.1,  
+            -0.5,  0.1,  
+
+            -0.3, 0.1,   
+             0.3, 0.1,  
+             0.0, 0.3,   
+           
+            -0.4, -0.3,
+            -0.3, -0.3,
+            -0.35, -0.2,
+            
+             0.3, -0.3,
+             0.4, -0.3,
+             0.35, -0.2,
+        ]);
+
+        const indices = new Uint16Array([
+            0, 1, 2,  3, 4, 5,  
+            6, 7, 8, 
+            9, 10, 11, 
+            12, 13, 14  
+        ]);
+
+        const vertexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+        const indexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
+        const vertexShaderSource = `
+            attribute vec2 position;
+            void main() {
+                gl_Position = vec4(position, 0.0, 1.0);
+            }
+        `;
+
+        const fragmentShaderSource = `
+            precision mediump float;
+            uniform vec4 color;
+            void main() {
+                gl_FragColor = color;
+            }
+        `;
+
+        function createShader(gl, type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error(gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+            return shader;
+        }
+
+        const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+        const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+        
+        const shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
+        gl.useProgram(shaderProgram);
+
+        const positionLocation = gl.getAttribLocation(shaderProgram, "position");
+        gl.enableVertexAttribArray(positionLocation);
+        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+        const colorLocation = gl.getUniformLocation(shaderProgram, "color");
+
+        function drawCar() {
+            gl.clearColor(0.87, 0.92, 1.0, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            
+            gl.uniform4f(colorLocation, 0, 0, 0, 1.0);
+            gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+            
+            gl.uniform4f(colorLocation, 1.0, 0, 0, 1.0);
+            gl.drawElements(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, 12);
+            
+            gl.uniform4f(colorLocation, 0, 1.0, 0, 1.0);
+            gl.drawElements(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, 18);
+            gl.drawElements(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, 24);
+        }
+
+        drawCar();
+    </script>
+</body>
+</html>
+

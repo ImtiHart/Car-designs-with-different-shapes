@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Car with WebGL</title>
+    <style>
+        canvas {
+            background-color: #2b3bd1;
+            display: block;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="glCanvas" width="600" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById("glCanvas");
+        const gl = canvas.getContext("webgl");
+        
+        if (!gl) {
+            alert("WebGL not supported");
+        }
+        
+        const vertices = new Float32Array([
+
+            -0.6, -0.2,  0.6, -0.2,
+             0.6, -0.2,  0.6,  0.1,
+             0.6,  0.1, -0.6,  0.1,
+            -0.6,  0.1, -0.6, -0.2,
+            
+            -0.3,  0.1,  0.3,  0.1,
+             0.3,  0.1,  0.2,  0.3,
+             0.2,  0.3, -0.2,  0.3,
+            -0.2,  0.3, -0.3,  0.1,
+            
+            -0.4, -0.2, -0.4, -0.3,
+            -0.4, -0.3, -0.3, -0.3,
+            -0.3, -0.3, -0.3, -0.2,
+            
+             0.3, -0.2,  0.3, -0.3,
+             0.3, -0.3,  0.4, -0.3,
+             0.4, -0.3,  0.4, -0.2
+        ]);
+        
+        const vertexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+        
+        const vertexShaderCode = `
+            attribute vec2 coordinates;
+            void main() {
+                gl_Position = vec4(coordinates, 0, 1.0);
+            }
+        `;
+        
+        const fragmentShaderCode = `
+            void main() {
+                gl_FragColor = vec4(1.0, 0, 0, 1.0);
+            }
+        `;
+        
+        const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vertexShader, vertexShaderCode);
+        gl.compileShader(vertexShader);
+        
+        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fragmentShader, fragmentShaderCode);
+        gl.compileShader(fragmentShader);
+        
+        const shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
+        gl.useProgram(shaderProgram);
+        
+        const coord = gl.getAttribLocation(shaderProgram, "coordinates");
+        gl.vertexAttribPointer(coord, 2, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(coord);
+        
+        gl.clearColor(0, 1.0, 1.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        
+        gl.drawArrays(gl.LINES, 0, vertices.length / 2);
+    </script>
+</body>
+</html>

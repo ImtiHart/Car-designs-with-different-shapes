@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Car with Dots in WebGL</title>
+    <style>
+        canvas {
+            display: block;
+            margin: auto;
+            background: #87CEEB;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="glCanvas" width="500" height="300"></canvas>
+    <script>
+        const canvas = document.getElementById("glCanvas");
+        const gl = canvas.getContext("webgl");
+        if (!gl) {
+            alert("WebGL not supported");
+        }
+        function generateCarDots() {
+            let dots = [];
+            for (let x = -0.5; x <= 0.5; x += 0.05) {
+                for (let y = -0.2; y <= 0.1; y += 0.05) {
+                    dots.push(x, y);
+                }
+            }
+            for (let x = -0.3; x <= 0.3; x += 0.05) {
+                for (let y = 0.1; y <= 0.3; y += 0.05) {
+                    dots.push(x, y);
+                }
+            }
+            for (let x = -0.4; x <= -0.3; x += 0.02) {
+                for (let y = -0.3; y <= -0.2; y += 0.02) {
+                    dots.push(x, y);
+                }
+            }
+            for (let x = 0.3; x <= 0.4; x += 0.02) {
+                for (let y = -0.3; y <= -0.2; y += 0.02) {
+                    dots.push(x, y);
+                }
+            }  
+            return new Float32Array(dots);
+        }
+
+        const vertices = generateCarDots();
+        const vertexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+        const vertexShaderSource = `
+            attribute vec2 position;
+            void main() {
+                gl_PointSize = 3.0;
+                gl_Position = vec4(position, 0.0, 1.0);
+            }
+        `;
+
+        const fragmentShaderSource = `
+            precision mediump float;
+            uniform vec4 color;
+            void main() {
+                gl_FragColor = color;
+            }
+        `;
+
+        function createShader(gl, type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error(gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+            return shader;
+        }
+
+        const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+        const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+        
+        const shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
+        gl.useProgram(shaderProgram);
+
+        const positionLocation = gl.getAttribLocation(shaderProgram, "position");
+        gl.enableVertexAttribArray(positionLocation);
+        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+        const colorLocation = gl.getUniformLocation(shaderProgram, "color");
+
+        function drawCar() {
+            gl.clearColor(1.0, 0, 1.0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            
+            gl.uniform4f(colorLocation, 1.0, 0.0, 0.0, 1.0);
+            gl.drawArrays(gl.POINTS, 0, vertices.length / 2);
+        }
+
+        drawCar();
+    </script>
+</body>
+</html>
